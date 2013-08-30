@@ -800,11 +800,11 @@ L<http://www.elasticsearch.org/guide/reference/api/delete.html>
     );
 
 
-Perform multiple C<index>, C<create> and C<delete> actions in a single request.
+Perform multiple C<index>, C<create>, C<update> and C<delete> actions in a single request.
 This is about 10x as fast as performing each action in a separate request.
 
 Each C<action> is a HASH ref with a key indicating the action type (C<index>,
-C<create> or C<delete>), whose value is another HASH ref containing the
+C<create>, C<update> or C<delete>), whose value is another HASH ref containing the
 associated metadata.
 
 The C<index> and C<type> parameters can be specified for each individual action,
@@ -866,6 +866,34 @@ encoded, otherwise you see errors when trying to retrieve it from ElasticSearch)
 
 The C<index> and C<type> parameters, if not specified, are inherited from
 the top level bulk request.
+
+=head4 C<update> action
+
+    { update  => {
+        index           => 'foo',
+        type            => 'bar',
+        id              => 123,
+
+        # required
+        script            => $script,
+      | doc               => $doc
+
+        # optional
+        params            => { params },
+        upsert            => { new_doc },
+        doc_as_upesrt     => 0 | 1,
+        consistency       => 'quorum' | 'one' | 'all',
+        fields            => [],
+        parent            => $parent,
+        percolate         => $percolate,
+        routing           => $routing,
+        version           => $version,
+        version_type      => 'internal' | 'external'
+    }}
+
+The C<index> and C<type> parameters, if not specified, are inherited from
+the top level bulk request.  ElasticSearch server version >= 0.90.1 is
+required for this operation.
 
 =head4 Error handlers
 
