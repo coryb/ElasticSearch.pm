@@ -399,6 +399,7 @@ sub _bulk {
 sub bulk_index  { shift->_bulk_action( 'index',  @_ ) }
 sub bulk_create { shift->_bulk_action( 'create', @_ ) }
 sub bulk_delete { shift->_bulk_action( 'delete', @_ ) }
+sub bulk_update { shift->_bulk_action( 'update', @_ ) }
 #===================================
 
 #===================================
@@ -458,6 +459,23 @@ my %Bulk_Actions = (
         version      => ONE_OPT,
         version_type => ONE_OPT,
     },
+    'update' => {
+        index         => ONE_OPT,
+        type          => ONE_OPT,
+        id            => ONE_OPT,
+        doc           => ONE_OPT,
+        doc_as_upsert => ONE_OPT,
+        fields        => ONE_OPT,
+        params        => ONE_OPT,
+        parent        => ONE_OPT,
+        percolate     => ONE_OPT,
+        routing       => ONE_OPT,
+        script        => ONE_OPT,
+        ttl           => ONE_OPT,
+        upsert        => ONE_OPT,
+        version       => ONE_OPT,
+        version_type  => ONE_OPT,
+    },
 );
 $Bulk_Actions{create} = $Bulk_Actions{index};
 
@@ -504,6 +522,19 @@ sub _bulk_request {
                 if keys %$params;
 
             my $data = delete $metadata{_data};
+            if( $action eq 'update' ) {
+                $data = {};
+                $data->{upsert} = delete $metadata{_upsert} if exists $metadata{_upsert};
+                if( exists $metadata{_doc} ) {
+                    $data->{doc} = delete $metadata{_doc};
+                    $data->{doc_as_upsert} = delete $metadata{_doc_as_upsert} if exists $metadata{_doc_as_upsert};
+                }
+                elsif( exists $metadata{_script} ) {
+                    $data->{script} = delete $metadata{_script};
+                    $data->{params} = delete $metadata{_params} if exists $metadata{_params};
+                }
+                die "Missing 'doc', 'script', or 'upsert' for action '$action'" unless keys %$data;
+            }
             my $request = $json->encode( { $action => \%metadata } ) . "\n";
             if ($data) {
                 $data = $json->encode($data) if ref $data eq 'HASH';
